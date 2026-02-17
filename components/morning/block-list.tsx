@@ -1,111 +1,323 @@
 "use client"
 
-import { useState } from "react"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useState, useRef, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 
 interface RoutineBlock {
   id: string
   name: string
   duration: number
-  defaultChecked: boolean
 }
 
-const defaultBlocks: RoutineBlock[] = [
-  { id: "meditation", name: "명상", duration: 20, defaultChecked: true },
-  { id: "shower", name: "샤워", duration: 15, defaultChecked: true },
-  { id: "breakfast", name: "아침식사", duration: 30, defaultChecked: false },
+const initialBlocks: RoutineBlock[] = [
+  { id: "meditation", name: "명상", duration: 20 },
+  { id: "shower", name: "샤워", duration: 15 },
+  { id: "breakfast", name: "아침식사", duration: 30 },
 ]
 
+function GripIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="9" cy="5" r="1" />
+      <circle cx="9" cy="12" r="1" />
+      <circle cx="9" cy="19" r="1" />
+      <circle cx="15" cy="5" r="1" />
+      <circle cx="15" cy="12" r="1" />
+      <circle cx="15" cy="19" r="1" />
+    </svg>
+  )
+}
+
+function XIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  )
+}
+
+function MinusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M5 12h14" />
+    </svg>
+  )
+}
+
+function PlusIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M5 12h14" />
+      <path d="M12 5v14" />
+    </svg>
+  )
+}
+
 export function BlockList() {
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(defaultBlocks.filter((b) => b.defaultChecked).map((b) => b.id))
+  const [blocks, setBlocks] = useState<RoutineBlock[]>(initialBlocks)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const deleteBlock = (id: string) => {
+    setBlocks((prev) => prev.filter((b) => b.id !== id))
+  }
+
+  const updateDuration = (id: string, delta: number) => {
+    setBlocks((prev) =>
+      prev.map((b) =>
+        b.id === id ? { ...b, duration: Math.max(5, Math.min(120, b.duration + delta)) } : b
+      )
+    )
+  }
+
+  const handleDragStart = useCallback((idx: number) => {
+    setDraggedIdx(idx)
+  }, [])
+
+  const handleDragOver = useCallback(
+    (e: React.DragEvent, idx: number) => {
+      e.preventDefault()
+      if (draggedIdx === null || draggedIdx === idx) return
+      setDragOverIdx(idx)
+    },
+    [draggedIdx]
   )
 
-  const toggleBlock = (id: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
+  const handleDrop = useCallback(
+    (idx: number) => {
+      if (draggedIdx === null || draggedIdx === idx) {
+        setDraggedIdx(null)
+        setDragOverIdx(null)
+        return
       }
-      return next
-    })
-  }
+      setBlocks((prev) => {
+        const next = [...prev]
+        const [moved] = next.splice(draggedIdx, 1)
+        next.splice(idx, 0, moved)
+        return next
+      })
+      setDraggedIdx(null)
+      setDragOverIdx(null)
+    },
+    [draggedIdx]
+  )
 
-  const selectAll = () => {
-    if (selected.size === defaultBlocks.length) {
-      setSelected(new Set())
-    } else {
-      setSelected(new Set(defaultBlocks.map((b) => b.id)))
+  const handleDragEnd = useCallback(() => {
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [])
+
+  // Touch-based reordering
+  const touchState = useRef<{
+    idx: number
+    startY: number
+    currentY: number
+  } | null>(null)
+
+  const handleTouchStart = useCallback((idx: number, e: React.TouchEvent) => {
+    touchState.current = {
+      idx,
+      startY: e.touches[0].clientY,
+      currentY: e.touches[0].clientY,
     }
-  }
+    setDraggedIdx(idx)
+  }, [])
 
-  const selectedBlocks = defaultBlocks.filter((b) => selected.has(b.id))
-  const totalMinutes = selectedBlocks.reduce((sum, b) => sum + b.duration, 0)
+  const handleTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!touchState.current || !listRef.current) return
+      touchState.current.currentY = e.touches[0].clientY
+
+      const items = listRef.current.querySelectorAll("[data-block-item]")
+      for (let i = 0; i < items.length; i++) {
+        const rect = items[i].getBoundingClientRect()
+        const midY = rect.top + rect.height / 2
+        if (e.touches[0].clientY < midY) {
+          setDragOverIdx(i)
+          return
+        }
+      }
+      setDragOverIdx(items.length - 1)
+    },
+    []
+  )
+
+  const handleTouchEnd = useCallback(() => {
+    if (touchState.current !== null && dragOverIdx !== null) {
+      handleDrop(dragOverIdx)
+    }
+    touchState.current = null
+    setDraggedIdx(null)
+    setDragOverIdx(null)
+  }, [dragOverIdx, handleDrop])
+
+  const totalMinutes = blocks.reduce((sum, b) => sum + b.duration, 0)
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-base font-semibold text-foreground">{"블록 구성"}</h2>
-        <button
-          type="button"
-          onClick={selectAll}
-          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          {selected.size === defaultBlocks.length ? "전체 해제" : "전체 선택"}
-        </button>
+        <span className="text-sm text-muted-foreground">
+          {"길게 눌러 순서 변경"}
+        </span>
       </div>
 
-      <div className="flex flex-col gap-2">
-        {defaultBlocks.map((block) => {
-          const isSelected = selected.has(block.id)
+      <div ref={listRef} className="flex flex-col gap-2">
+        {blocks.map((block, idx) => {
+          const isDragged = draggedIdx === idx
+          const isDragOver = dragOverIdx === idx && draggedIdx !== idx
+          const isEditing = editingId === block.id
+
           return (
-            <button
+            <div
               key={block.id}
-              type="button"
-              onClick={() => toggleBlock(block.id)}
-              className={`flex items-center gap-3 rounded-xl px-4 py-3.5 transition-all ${
-                isSelected
-                  ? "bg-secondary border border-primary/20"
-                  : "bg-card border border-border"
+              data-block-item
+              draggable
+              onDragStart={() => handleDragStart(idx)}
+              onDragOver={(e) => handleDragOver(e, idx)}
+              onDrop={() => handleDrop(idx)}
+              onDragEnd={handleDragEnd}
+              className={`relative flex items-center gap-2 rounded-xl bg-card border px-3 py-3 transition-all select-none ${
+                isDragged
+                  ? "opacity-50 scale-95 border-primary/40"
+                  : isDragOver
+                  ? "border-primary border-dashed"
+                  : "border-border"
               }`}
             >
-              <Checkbox
-                checked={isSelected}
-                className="pointer-events-none size-5 rounded-md"
-                tabIndex={-1}
-              />
-              <span
-                className={`flex-1 text-left text-sm font-medium ${
-                  isSelected ? "text-foreground" : "text-muted-foreground"
-                }`}
+              {/* Drag handle */}
+              <div
+                className="flex items-center justify-center cursor-grab active:cursor-grabbing touch-none p-1"
+                onTouchStart={(e) => handleTouchStart(idx, e)}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
               >
+                <GripIcon className="text-muted-foreground/60" />
+              </div>
+
+              {/* Block name */}
+              <span className="flex-1 text-sm font-medium text-foreground">
                 {block.name}
               </span>
-              <Badge
-                variant={isSelected ? "default" : "secondary"}
-                className={`rounded-full text-xs font-medium ${
-                  isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
-                }`}
+
+              {/* Duration control */}
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => updateDuration(block.id, -5)}
+                    className="flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:bg-secondary transition-colors"
+                  >
+                    <MinusIcon />
+                  </button>
+                  <span className="w-12 text-center text-sm font-semibold text-foreground tabular-nums">
+                    {block.duration}{"분"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => updateDuration(block.id, 5)}
+                    className="flex size-7 items-center justify-center rounded-lg bg-muted text-muted-foreground hover:bg-secondary transition-colors"
+                  >
+                    <PlusIcon />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingId(null)}
+                    className="ml-1 text-xs font-medium text-primary"
+                  >
+                    {"완료"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingId(block.id)}
+                  className="transition-colors"
+                >
+                  <Badge
+                    variant="secondary"
+                    className="rounded-full text-xs font-medium bg-secondary text-secondary-foreground cursor-pointer hover:bg-primary/10"
+                  >
+                    {block.duration}{"분"}
+                  </Badge>
+                </button>
+              )}
+
+              {/* Delete button */}
+              <button
+                type="button"
+                onClick={() => deleteBlock(block.id)}
+                className="flex size-7 items-center justify-center rounded-lg text-muted-foreground/60 hover:bg-destructive/10 hover:text-destructive transition-colors"
               >
-                {block.duration}{"분"}
-              </Badge>
-            </button>
+                <XIcon />
+              </button>
+            </div>
           )
         })}
       </div>
 
+      {/* Summary bar */}
       <div className="mt-4 flex items-center justify-between rounded-xl bg-card border border-border px-4 py-3">
         <span className="text-sm font-medium text-muted-foreground">
-          {selectedBlocks.length}{"개 · "}
+          {blocks.length}{"개 · "}
           {totalMinutes}{"분"}
         </span>
         <span className="text-sm font-semibold text-primary">
-          {"07:55 → 09:00"}
+          {"07:55 → "}
+          {(() => {
+            const start = 7 * 60 + 55
+            const end = start + totalMinutes
+            const h = Math.floor(end / 60)
+            const m = end % 60
+            return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`
+          })()}
         </span>
       </div>
     </div>
