@@ -3,17 +3,16 @@
 import { useState, useRef, useCallback } from "react"
 import { Badge } from "@/components/ui/badge"
 
-interface RoutineBlock {
+export interface RoutineBlock {
   id: string
   name: string
   duration: number
 }
 
-const initialBlocks: RoutineBlock[] = [
-  { id: "meditation", name: "명상", duration: 20 },
-  { id: "shower", name: "샤워", duration: 15 },
-  { id: "breakfast", name: "아침식사", duration: 30 },
-]
+interface BlockListProps {
+  blocks: RoutineBlock[]
+  onBlocksChange: (blocks: RoutineBlock[]) => void
+}
 
 function GripIcon({ className }: { className?: string }) {
   return (
@@ -98,8 +97,7 @@ function PlusIcon({ className }: { className?: string }) {
   )
 }
 
-export function BlockList() {
-  const [blocks, setBlocks] = useState<RoutineBlock[]>(initialBlocks)
+export function BlockList({ blocks, onBlocksChange: setBlocks }: BlockListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draggedIdx, setDraggedIdx] = useState<number | null>(null)
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null)
