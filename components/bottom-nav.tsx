@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Sun, ClockArrowUp } from "lucide-react"
+import { Sun, Clock } from "lucide-react"
 
 const NAV_ITEMS = [
   { href: "/", label: "루틴", icon: Sun },
-  { href: "/history", label: "기록", icon: ClockArrowUp },
+  { href: "/history", label: "기록", icon: Clock },
 ] as const
 
 export function BottomNav() {
