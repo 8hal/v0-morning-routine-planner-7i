@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 import { StatsCards } from "@/components/history/stats-cards"
+import { BottomNav } from "@/components/bottom-nav"
 import { WeekCalendar } from "@/components/history/week-calendar"
 import { HistoryList, type HistoryEntry } from "@/components/history/history-list"
 
@@ -105,14 +104,7 @@ export default function HistoryPage() {
       <div className="h-12" />
 
       {/* Header */}
-      <header className="flex items-center gap-3 px-4 pb-4">
-        <Link
-          href="/"
-          className="flex size-10 items-center justify-center rounded-xl text-muted-foreground hover:bg-muted transition-colors"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="size-5" />
-        </Link>
+      <header className="px-4 pb-4">
         <h1 className="text-xl font-bold text-foreground">{"기록"}</h1>
       </header>
 
@@ -146,6 +138,9 @@ export default function HistoryPage() {
           <HistoryList entries={filteredEntries} />
         </div>
       </main>
+
+      {/* Bottom navigation */}
+      <BottomNav />
     </div>
   )
 }
