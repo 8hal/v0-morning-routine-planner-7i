@@ -3,17 +3,21 @@
 import { useState } from "react"
 import { StatsCards } from "@/components/history/stats-cards"
 import { BottomNav } from "@/components/bottom-nav"
+import { WeeklyChart } from "@/components/history/weekly-chart"
 import { WeekCalendar } from "@/components/history/week-calendar"
 import { HistoryList, type HistoryEntry } from "@/components/history/history-list"
 
 const SAMPLE_ENTRIES: HistoryEntry[] = [
   {
-    date: "2026년 2월 17일",
+    date: "2월 17일",
     dayLabel: "화요일",
     startTime: "07:30",
     endTime: "09:05",
     totalMinutes: 95,
-    mood: "\u{1F60A}",
+    mood: "\uD83D\uDE0A",
+    commuteType: "office",
+    satisfaction: 4,
+    energy: 4,
     blocks: [
       { name: "명상", duration: 20 },
       { name: "스트레칭", duration: 10 },
@@ -23,12 +27,15 @@ const SAMPLE_ENTRIES: HistoryEntry[] = [
     ],
   },
   {
-    date: "2026년 2월 16일",
+    date: "2월 16일",
     dayLabel: "월요일",
     startTime: "07:55",
     endTime: "09:00",
     totalMinutes: 65,
-    mood: "\u{1F634}",
+    mood: "\uD83D\uDE34",
+    commuteType: "office",
+    satisfaction: 3,
+    energy: 3,
     blocks: [
       { name: "명상", duration: 15 },
       { name: "샤워", duration: 15 },
@@ -37,12 +44,15 @@ const SAMPLE_ENTRIES: HistoryEntry[] = [
     ],
   },
   {
-    date: "2026년 2월 15일",
+    date: "2월 15일",
     dayLabel: "일요일",
     startTime: "08:30",
     endTime: "09:30",
     totalMinutes: 60,
-    mood: "\u{1F31E}",
+    mood: "\uD83C\uDF1E",
+    commuteType: "home",
+    satisfaction: 5,
+    energy: 5,
     blocks: [
       { name: "명상", duration: 20 },
       { name: "요가", duration: 20 },
@@ -50,12 +60,15 @@ const SAMPLE_ENTRIES: HistoryEntry[] = [
     ],
   },
   {
-    date: "2026년 2월 14일",
+    date: "2월 14일",
     dayLabel: "토요일",
     startTime: "09:00",
     endTime: "09:45",
     totalMinutes: 45,
-    mood: "\u{1F60C}",
+    mood: "\uD83D\uDE0C",
+    commuteType: "home",
+    satisfaction: 4,
+    energy: 4,
     blocks: [
       { name: "명상", duration: 15 },
       { name: "샤워", duration: 15 },
@@ -63,12 +76,15 @@ const SAMPLE_ENTRIES: HistoryEntry[] = [
     ],
   },
   {
-    date: "2026년 2월 12일",
+    date: "2월 12일",
     dayLabel: "목요일",
     startTime: "07:30",
     endTime: "08:35",
     totalMinutes: 65,
-    mood: "\u{1F4AA}",
+    mood: "\uD83D\uDCAA",
+    commuteType: "office",
+    satisfaction: 4,
+    energy: 3,
     blocks: [
       { name: "명상", duration: 15 },
       { name: "운동", duration: 20 },
@@ -91,9 +107,9 @@ export default function HistoryPage() {
 
   const filteredEntries = selectedDate
     ? SAMPLE_ENTRIES.filter((e) => {
-        const match = e.date.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/)
+        const match = e.date.match(/(\d{1,2})월 (\d{1,2})일/)
         if (!match) return false
-        const key = `${match[1]}-${match[2].padStart(2, "0")}-${match[3].padStart(2, "0")}`
+        const key = `2026-${match[1].padStart(2, "0")}-${match[2].padStart(2, "0")}`
         return key === selectedDate
       })
     : SAMPLE_ENTRIES
@@ -111,7 +127,13 @@ export default function HistoryPage() {
       {/* Scrollable content */}
       <main className="flex-1 overflow-y-auto px-4 pb-8">
         <div className="mx-auto flex w-full max-w-md flex-col gap-4">
+          {/* Stats summary */}
           <StatsCards />
+
+          {/* Weekly bar chart */}
+          <WeeklyChart />
+
+          {/* Week calendar */}
           <WeekCalendar
             completedDates={COMPLETED_DATES}
             selectedDate={selectedDate}
@@ -120,6 +142,7 @@ export default function HistoryPage() {
             }
           />
 
+          {/* Section header */}
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-foreground">
               {selectedDate ? "선택한 날짜" : "최근 기록"}
@@ -135,6 +158,7 @@ export default function HistoryPage() {
             )}
           </div>
 
+          {/* History list */}
           <HistoryList entries={filteredEntries} />
         </div>
       </main>

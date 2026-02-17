@@ -104,12 +104,12 @@ export function BlockList({ blocks, onBlocksChange: setBlocks }: BlockListProps)
   const listRef = useRef<HTMLDivElement>(null)
 
   const deleteBlock = (id: string) => {
-    setBlocks((prev) => prev.filter((b) => b.id !== id))
+    setBlocks(blocks.filter((b) => b.id !== id))
   }
 
   const updateDuration = (id: string, delta: number) => {
-    setBlocks((prev) =>
-      prev.map((b) =>
+    setBlocks(
+      blocks.map((b) =>
         b.id === id ? { ...b, duration: Math.max(5, Math.min(120, b.duration + delta)) } : b
       )
     )
@@ -135,16 +135,14 @@ export function BlockList({ blocks, onBlocksChange: setBlocks }: BlockListProps)
         setDragOverIdx(null)
         return
       }
-      setBlocks((prev) => {
-        const next = [...prev]
-        const [moved] = next.splice(draggedIdx, 1)
-        next.splice(idx, 0, moved)
-        return next
-      })
+      const next = [...blocks]
+      const [moved] = next.splice(draggedIdx, 1)
+      next.splice(idx, 0, moved)
+      setBlocks(next)
       setDraggedIdx(null)
       setDragOverIdx(null)
     },
-    [draggedIdx]
+    [draggedIdx, blocks, setBlocks]
   )
 
   const handleDragEnd = useCallback(() => {
@@ -304,11 +302,11 @@ export function BlockList({ blocks, onBlocksChange: setBlocks }: BlockListProps)
       {/* Summary bar */}
       <div className="mt-4 flex items-center justify-between rounded-xl bg-card border border-border px-4 py-3">
         <span className="text-sm font-medium text-muted-foreground">
-          {blocks.length}{"개 · "}
+          {blocks.length}{"개 \u00B7 "}
           {totalMinutes}{"분"}
         </span>
         <span className="text-sm font-semibold text-primary">
-          {"07:55 → "}
+          {"07:55 \u2192 "}
           {(() => {
             const start = 7 * 60 + 55
             const end = start + totalMinutes
